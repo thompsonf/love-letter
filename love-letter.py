@@ -194,6 +194,31 @@ class LoveLetter():
 
 		while len(self.deck) > 0:
 			self.takeTurn(players[curPlayerIdx])
-			if len(self.getAllRemainingPlayers()) == 0:
-				return 
+			if len(self.getAllRemainingPlayers()) == 1:
+				return self.getAllRemainingPlayers()[0]
+			#determine the index of the next player
+			while True:
+				curPlayerIdx = (curPlayerIdx + 1) % len(self.players)
+				if not self.isEliminated(self.players[curPlayerIdx]):
+					break
 
+		#determine the winner by who has the highest card. If there is a tie,
+		#determine winner by sum of discarded numbers
+		scoreList = [self.hands[p][0] for p in self.players if len(self.hands[p]) > 0 else 0]
+		maxScore = max(scoreList)
+		maxPlayers = [idx for idx, score in enumerate(maxScore) if score == maxScore]
+		if len(maxPlayers) == 1:
+			return self.players[maxPlayers[0]]
+		else:
+			#we're just gonna assume that it's impossible for the sum of
+			#discarded cards to be equal for two players, since that's what
+			#the official rules do
+			curMax = 0
+			curName = ""
+			for idx in maxPlayers:
+				name = self.players[idx]
+				discardedScore = sum(self.discard[name])
+				if discardedScore > curMax:
+					curMax = discardedScore
+					curName = name
+			return name
