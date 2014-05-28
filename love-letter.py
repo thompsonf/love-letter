@@ -2,6 +2,9 @@ class LoveLetter():
 	#deck is a list of cards left in the deck
 	deck = []
 
+	#some cards are removed at the beginning of the game
+	removedCards = []
+
 	#discard maps players to the cards they've
 	#discarded so far
 	discard = {}
@@ -21,7 +24,15 @@ class LoveLetter():
 	#score lists the number of affection tokens owned by each player
 	score = {}
 
-	def getAllUnprotectedPlayers(self):
+	def discardHand(self, player):
+		self.notifyAll(player + " discards " + self.getCardStr(self.hands[player][0]))
+		self.discard[player].append(self.hands[player][0])
+		self.hands[player] = []
+
+	def getAllOtherUnprotectedPlayers(self, player):
+		return [p for p in self.players if p != player and self.isUnprotected(p)]
+
+	def getAllUnprotectedPlayers(self, player):
 		return [p for p in self.players if self.isUnprotected(p)]
 
 	def isUnprotected(self, player):
@@ -48,7 +59,7 @@ class LoveLetter():
 		return str(card) + ': ' + cardNames[card - 1]
 
 	def eliminatePlayer(self, player):
-		self.hands[player] = []
+		self.discardHand(self, player)
 
 	def requestPlayerName(self, player, request, allowSelf):
 		while True:
@@ -77,40 +88,72 @@ class LoveLetter():
 	def guardAction(self, player):
 		name = requestPlayerName(player, "Whose card will you guess?", False)
 		card = requestCard(player, "Which card will you guess?")
-		self.notifyAll(player + " discards " + self.getCardStr(card))
 		self.notifyAll(player + " guesses that " + name + "'s card is " + self.getCardStr(card))
 		if self.hands[name] == [card]:
 			self.notifyAll(player + " is correct! " + name + " is eliminated!")
+			self.eliminatePlayer(name)
 		else:
 			self.notifyAll(player + " is incorrect!")
 
 	def priestAction(self, player):
-		
+		name = requestPlayerName(player, "Whose hand will you look at?", False)
+		self.notifyAll(player + " looks at " + name + "'s hand")
+		self.notifyPlayer(player, name + " has a " + self.getCardStr(self.hands[name][0]))
 
 	def baronAction(self, player):
-		pass
+		name = requestPlayerName(player, "Whose card will you compare yours with?", False)
+		self.notifyAll(player + " compares cards with " + name)
+		if self.hands[player] < self.hands[name]:
+			self.notifyAll(name + " wins! " + player + " is eliminated!")
+			self.eliminatePlayer(player)
+		elif self.hands[name] < self.hands[player]:
+			self.notifyAll(player + " wins! " + name + " is eliminated!")
+			self.eliminatePlayer(name)
+		else:
+			self.notifyAll("It's a tie! Both players remain in the game.")
 
 	def handmaidAction(self, player):
-		pass
+		self.notifyAll(player + " is protected until the his/her next turn.")
 
 	def princeAction(self, player):
-		pass
+		name = requestPlayerName(player, "Chose who will discard his/her hand and draw a new card.", True)
+		self.notifyAll(player + " chooses " + name + " to discard his/her hand and draw a new card.")
+		self.discardHand(name)
+		#still need to draw a new card
 
 	def kingAction(self, player):
-		pass
+		name = requestPlayerName(player, "With whom will you swap hands?", False)
+		self.notifyAll(player + " swaps hands with " + name)
+		curHand = self.hands[player]
+		self.hands[player] = self.hands[name]
+		self.hands[name] = curHand
 
 	def countessAction(self, player):
-		pass
+		self.notifyAll(self.getCardStr(7) + " has no action.")
 
 	def princessAction(self, player):
-		pass
+		self.notifyAll(player + " is eliminated from the game!")
+		self.eliminatePlayer(player)
 
-	def discard(self, player, card):
+	def discardAction(self, player, card):
 		if card in self.hands[player]:
 			#if 7 is in hand along with 5 or 6, 7 must be discarded
 			if card != 7 and (5 in self.hands[player] or 6 in self.hands[player]) and 7 in self.hands[player]:
 				self.notifyPlayer(player, "You must discard " + self.getCardStr(7))
 			else:
+				if card < 1 or card > 8:
+					raise InvalidCardError
+
+				self.notifyAll(player + " discards " + self.getCardStr(card))
+				#actually discard the card
+				if self.hands[player][0] == card:
+					self.hands[player] = [self.hands[player][1]]
+				else:
+					self.hands[player] = [self.hands[player][0]]
+
+				if self.getAllOtherUnprotectedPlayers(player) == [] and card in [1,2,3,6]:
+					self.notifyAll("All other active players are protected by the handmaid, so the card has no effect.")
+					return
 				if card == 1:
 					self.guardAction(player)
 				elif card == 2:
@@ -127,12 +170,5 @@ class LoveLetter():
 					self.countessAction(player)
 				elif card == 8:
 					self.princessAction(player)
-				else:
-					raise InvalidCardError
-			#actually discard the card
-			if self.hands[player][0] == card:
-				self.hands[player] = [self.hands[player][1]]
-			else:
-				self.hands[player] = [self.hands[player][0]]
 		else:
 			self.notifyPlayer(player, "That card is not in your hand")
