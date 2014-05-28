@@ -1,3 +1,5 @@
+import random
+
 class LoveLetter():
 	#deck is a list of cards left in the deck
 	deck = []
@@ -23,6 +25,9 @@ class LoveLetter():
 
 	#score lists the number of affection tokens owned by each player
 	score = {}
+
+	#player whose turn is next
+	self.curPlayerIdx = 0
 
 	def discardHand(self, player):
 		self.notifyAll(player + " discards " + self.getCardStr(self.hands[player][0]))
@@ -172,3 +177,23 @@ class LoveLetter():
 					self.princessAction(player)
 		else:
 			self.notifyPlayer(player, "That card is not in your hand")
+
+	#returns the name of the round winner
+	def startRound(self, prevWinner):
+		self.deck = [1]*5 + [2,2,3,3,4,4,5,5,6,7,8]
+		random.shuffle(self.deck)
+		if len(self.players) == 2:
+			self.removedCards = [self.deck.pop() for i in range(3)]
+		else:
+			self.removedCards = [self.deck.pop()]
+
+		curPlayerIdx = prevWinner
+
+		for p in players:
+			self.hands[p] = self.deck.pop()
+
+		while len(self.deck) > 0:
+			self.takeTurn(players[curPlayerIdx])
+			if len(self.getAllRemainingPlayers()) == 0:
+				return 
+
