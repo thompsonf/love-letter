@@ -151,7 +151,7 @@ class LoveLetter():
         self.notifyAll(player + " is protected until the his/her next turn.")
 
     def princeAction(self, player):
-        name = self.requestPlayerName(player, "Chose who will discard his/her hand and draw a new card.", True)
+        name = self.requestPlayerName(player, "Who will discard his/her hand and draw a new card?", True)
         self.notifyAll(player + " chooses " + name + " to discard his/her hand and draw a new card.")
         self.discardHand(name)
         if self.discard[name][-1] == 8:
@@ -179,6 +179,7 @@ class LoveLetter():
     def takeTurn(self, player):
         self.hands[player].append(self.deck.pop())
         self.notifyAllGameState()
+        self.notifyAll(player + "'s turn")
         while True:
             card = self.requestCard(player, "Which card will you play?")
             if card in self.hands[player]:
@@ -195,6 +196,7 @@ class LoveLetter():
                         self.hands[player] = [self.hands[player][1]]
                     else:
                         self.hands[player] = [self.hands[player][0]]
+                    self.discard[player].append(card)
 
                     if self.getAllOtherUnprotectedPlayers(player) == [] and card in [1,2,3,6]:
                         self.notifyAll("All other active players are protected by the handmaid, so the card has no effect.")
@@ -306,7 +308,7 @@ playerNames.append(name.strip())
 #ask how many players
 conn.send("How many players? ".encode())
 numPlayers = conn.recv(1024).decode().strip()
-while not numPlayers.isdigit() or int(numPlayers) < 2 or int(numPlayers) > 5:
+while not numPlayers.isdigit() or int(numPlayers) < 2 or int(numPlayers) > 4:
     conn.send("Please enter a number between 2 and 4: ".encode())
     numPlayers = conn.recv(1024).decode()
 numPlayers = int(numPlayers)

@@ -31,7 +31,7 @@ while True:
        x == "4:" or
        x == "play?" or
        x == "hands?" or
-       x == "card." or
+       x == "card?" or
        x == "with?" or
        x == "at?" or
        x == "guess?"):
