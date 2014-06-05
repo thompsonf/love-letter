@@ -44,7 +44,7 @@ class LoveLetter():
     def notifyGameState(self, player):
         dashStr = "-----------------------------------"
         affTokStr = "Affection tokens: " + ', '.join([p + ':' + str(self.affectionTokens[p]) for p in self.players])
-        deckStr = "Cards in deck: " + str(len(self.deck) - 1)
+        deckStr = "Cards in deck: " + str(len(self.deck))
         remPlayerStr = "Remaining players: " + ', '.join(self.getAllRemainingPlayers())
         discardStr = "Discards: " + ', '.join([p+':'+''.join([str(c) for c in self.discard[p]]) for p in self.players])
         handStr = "Your hand: " + ', '.join([self.getCardStr(c) for c in self.hands[player]])
@@ -69,7 +69,7 @@ class LoveLetter():
 
     def isUnprotected(self, player):
         if len(self.discard[player]) > 0:
-            return self.discard[p][-1] != 4
+            return self.discard[player][-1] != 4
         else:
             return True
 
@@ -138,6 +138,8 @@ class LoveLetter():
     def baronAction(self, player):
         name = self.requestPlayerName(player, "Whose card will you compare yours with?", False)
         self.notifyAll(player + " compares cards with " + name)
+        self.notifyPlayer(player, name + " has a " + self.getCardStr(self.hands[name][0]))
+        self.notifyPlayer(name, player + " has a " + self.getCardStr(self.hands[player][0]))
         if self.hands[player][0] < self.hands[name][0]:
             self.notifyAll(name + " wins! " + player + " is eliminated!")
             self.eliminatePlayer(player)
@@ -250,7 +252,7 @@ class LoveLetter():
         #determine winner by sum of discarded numbers
         scoreList = [(self.hands[p][0], p) for p in self.players if len(self.hands[p]) > 0]
         maxScore, player = max(scoreList)
-        maxPlayers = [p for s, p in scoreList if score == maxScore]
+        maxPlayers = [p for s, p in scoreList if s == maxScore]
         if len(maxPlayers) == 1:
             return self.players[maxPlayers[0]]
         else:
